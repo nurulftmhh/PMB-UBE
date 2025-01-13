@@ -49,12 +49,17 @@ if user_input:
     predicted_intent, predicted_response = predict_intent_and_response(user_input)
     
     # Menyimpan pesan dan respons dalam session_state untuk melacak percakapan
-    st.session_state['messages'].append(f"User: {user_input}")
-    st.session_state['messages'].append(f"Bot: {predicted_response}")
+    st.session_state['messages'].append(('user', user_input))
+    st.session_state['messages'].append(('bot', predicted_response))
     
-    # Menampilkan percakapan
-    for message in st.session_state['messages']:
-        st.write(message)
-
     # Kosongkan kolom input setelah pengguna mengirimkan pesan
     st.text_input("Tanyakan sesuatu tentang pendaftaran:", key="input_box", value="")
+
+# Menampilkan percakapan dengan tampilan bubble chat
+for message_type, message in st.session_state['messages']:
+    if message_type == 'user':
+        st.markdown(f'<div style="background-color:#DCF8C6; padding:10px; border-radius:15px; margin-bottom:10px;">'
+                    f'<strong>User:</strong> {message}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div style="background-color:#E8E8E8; padding:10px; border-radius:15px; margin-bottom:10px;">'
+                    f'<strong>Bot:</strong> {message}</div>', unsafe_allow_html=True)
