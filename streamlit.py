@@ -37,6 +37,10 @@ st.sidebar.write(
     "Chatbot ini membantu Anda dengan pertanyaan terkait pendaftaran mahasiswa di BotEdu."
 )
 
+# Menyimpan percakapan di session state
+if 'conversation' not in st.session_state:
+    st.session_state.conversation = []
+
 # Input box untuk user query
 user_input = st.text_input("Tanyakan sesuatu tentang pendaftaran:")
 
@@ -44,6 +48,10 @@ if user_input:
     # Mendapatkan intent dan respons
     predicted_intent, predicted_response = predict_intent_and_response(user_input)
     
-    # Menampilkan hasil
-    st.write(f"**Predicted Intent:** {predicted_intent}")
-    st.write(f"**Response:** {predicted_response}")
+    # Menambahkan percakapan ke session state
+    st.session_state.conversation.append(f"**Anda:** {user_input}")
+    st.session_state.conversation.append(f"**BotEdu:** {predicted_response}")
+
+# Menampilkan percakapan sebelumnya
+for message in st.session_state.conversation:
+    st.write(message)
