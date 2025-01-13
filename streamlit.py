@@ -37,24 +37,24 @@ st.sidebar.write(
     "Chatbot ini membantu Anda dengan pertanyaan terkait pendaftaran mahasiswa di BotEdu."
 )
 
-# Menyimpan percakapan di session state
-if 'conversation' not in st.session_state:
-    st.session_state.conversation = []
+# State untuk menyimpan percakapan
+if 'messages' not in st.session_state:
+    st.session_state['messages'] = []
 
 # Input box untuk user query
-user_input = st.text_input("Tanyakan sesuatu tentang pendaftaran:", key="input")
+user_input = st.text_input("Tanyakan sesuatu tentang pendaftaran:")
 
 if user_input:
     # Mendapatkan intent dan respons
     predicted_intent, predicted_response = predict_intent_and_response(user_input)
     
-    # Menambahkan percakapan ke session state
-    st.session_state.conversation.append({"user": user_input, "bot": predicted_response})
+    # Menyimpan pesan dan respons dalam session_state untuk melacak percakapan
+    st.session_state['messages'].append(f"User: {user_input}")
+    st.session_state['messages'].append(f"Bot: {predicted_response}")
+    
+    # Menampilkan percakapan
+    for message in st.session_state['messages']:
+        st.write(message)
 
-    # Mengosongkan input setelah pengiriman
-    st.session_state.input = ""
-
-# Menampilkan percakapan sebelumnya
-for chat in st.session_state.conversation:
-    st.write(f"**Anda:** {chat['user']}")
-    st.write(f"**BotEdu:** {chat['bot']}")
+    # Kosongkan kolom input setelah pengguna mengirimkan pesan
+    st.text_input("Tanyakan sesuatu tentang pendaftaran:", key="input_box", value="")
