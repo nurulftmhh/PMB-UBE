@@ -1,44 +1,29 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import string
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.pipeline import make_pipeline
-from sklearn.ensemble import RandomForestClassifier
-
-# Download stopwords and wordnet for lemmatization
-nltk.download('stopwords')
-nltk.download('wordnet')
-
-# Load your trained model
-# Make sure to save your model after training and load it here
-# For example, you can use joblib or pickle to save and load your model
 import joblib
-model = joblib.load('intent_classifier.pkl')
 
-# Preprocessing function
-lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words('english'))
+# Load the trained model
+model_path = 'intent_classifier.pkl'
+model = joblib.load(model_path)
 
-def preprocess_text(text):
-    text = text.lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))
-    words = text.split()
-    words = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
-    return ' '.join(words)
+def predict_intent(user_input):
+    # Predict the intent of the user input
+    prediction = model.predict([user_input])
+    return prediction[0]
 
 # Streamlit app
-st.title("Chatbot Intent Prediction")
+st.title("Intent Classification Chatbot")
 
-user_input = st.text_input("Ask your question:")
+st.sidebar.header("About")
+st.sidebar.write(
+    "This chatbot is powered by a Random Forest Classifier trained to classify intents based on text input."
+)
 
-if st.button("Submit"):
-    if user_input:
-        processed_input = preprocess_text(user_input)
-        prediction = model.predict([processed_input])
-        st.write(f'Predicted Intent: {prediction[0]}')
-    else:
-        st.write("Please enter a question.")
+# Input box for user query
+user_input = st.text_input("Ask a question:")
+
+if user_input:
+    # Get the predicted intent
+    response = predict_intent(user_input)
+
+    # Display the response
+    st.write(f"**Predicted Intent:** {response}")
