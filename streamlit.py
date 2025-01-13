@@ -37,9 +37,9 @@ st.sidebar.write(
     "Chatbot ini membantu Anda dengan pertanyaan terkait pendaftaran mahasiswa di BotEdu."
 )
 
-# State untuk menyimpan percakapan
-if 'messages' not in st.session_state:
-    st.session_state['messages'] = []
+# Menyimpan percakapan di session state
+if 'conversation' not in st.session_state:
+    st.session_state.conversation = []
 
 # Input box untuk user query
 user_input = st.text_input("Tanyakan sesuatu tentang pendaftaran:")
@@ -48,18 +48,10 @@ if user_input:
     # Mendapatkan intent dan respons
     predicted_intent, predicted_response = predict_intent_and_response(user_input)
     
-    # Menyimpan pesan dan respons dalam session_state untuk melacak percakapan
-    st.session_state['messages'].append(('user', user_input))
-    st.session_state['messages'].append(('bot', predicted_response))
-    
-    # Kosongkan kolom input setelah pengguna mengirimkan pesan
-    st.text_input("Tanyakan sesuatu tentang pendaftaran:", key="input_box", value="")
+    # Menambahkan percakapan ke session state
+    st.session_state.conversation.append(f"**Anda:** {user_input}")
+    st.session_state.conversation.append(f"**BotEdu:** {predicted_response}")
 
-# Menampilkan percakapan dengan tampilan bubble chat
-for message_type, message in st.session_state['messages']:
-    if message_type == 'user':
-        st.markdown(f'<div style="background-color:#DCF8C6; padding:10px; border-radius:15px; margin-bottom:10px;">'
-                    f'<strong>User:</strong> {message}</div>', unsafe_allow_html=True)
-    else:
-        st.markdown(f'<div style="background-color:#E8E8E8; padding:10px; border-radius:15px; margin-bottom:10px;">'
-                    f'<strong>Bot:</strong> {message}</div>', unsafe_allow_html=True)
+# Menampilkan percakapan sebelumnya
+for message in st.session_state.conversation:
+    st.write(message)
