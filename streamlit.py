@@ -1,57 +1,147 @@
 import streamlit as st
 import joblib
 import pandas as pd
+from datetime import datetime
 
-# Muat model yang sudah dilatih
-model_path = 'intent_classifier.pkl'
-model = joblib.load(model_path)
+# Custom CSS untuk chat bubbles
+def local_css():
+    st.markdown("""
+    <style>
+    .chat-container {
+        padding: 10px;
+    }
+    
+    .chat-message {
+        padding: 1rem;
+        border-radius: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .user-message {
+        background-color: #E9ECEF;
+        margin-left: 20%;
+        margin-right: 2%;
+    }
+    
+    .bot-message {
+        background-color: #007AFF;
+        color: white;
+        margin-right: 20%;
+        margin-left: 2%;
+    }
+    
+    .message-time {
+        font-size: 0.8rem;
+        color: #888;
+        margin-top: 5px;
+    }
+    
+    .chat-input {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        padding: 20px;
+        background-color: white;
+    }
+    
+    .main-container {
+        margin-bottom: 100px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# Muat dataset dari CSV yang berisi intent dan respons
-train_df = pd.read_csv('Intent Pendaftaran Mahasiswa BotEdu - Data Train.csv')
+# Fungsi untuk menampilkan pesan dalam format bubble
+def display_message(message, is_user=True):
+    current_time = datetime.now().strftime("%H:%M")
+    if is_user:
+        st.markdown(f"""
+        <div class="chat-message user-message">
+            {message}
+            <div class="message-time">{current_time}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div class="chat-message bot-message">
+            {message}
+            <div class="message-time">{current_time}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-# Membuat mapping antara intent dan respons
-intent_response_mapping = dict(zip(train_df['Intent'], train_df['Respon']))
+# Muat model dan dataset
+@st.cache_resource
+def load_model():
+    model = joblib.load('intent_classifier.pkl')
+    return model
 
-# Fungsi untuk memproses input sebelum prediksi (misalnya pembersihan teks, tokenisasi, dll.)
+@st.cache_data
+def load_dataset():
+    train_df = pd.read_csv('Intent Pendaftaran Mahasiswa BotEdu - Data Train.csv')
+    return train_df
+
 def preprocess_text(text):
-    # Tambahkan proses pembersihan teks sesuai kebutuhan
-    return text.lower()  # Contoh sederhana, bisa disesuaikan dengan preprocessing yang lebih kompleks
+    return text.lower()
 
-def predict_intent_and_response(user_input):
-    # Memproses input dari user
+def predict_intent_and_response(user_input, model, intent_response_mapping):
     processed_input = preprocess_text(user_input)
-    
-    # Prediksi intent menggunakan model yang sudah dilatih
     prediction = model.predict([processed_input])[0]
-    
-    # Ambil respons berdasarkan intent yang diprediksi
-    response = intent_response_mapping.get(prediction, "Intent tidak ditemukan.")
-    
+    response = intent_response_mapping.get(prediction, "Maaf, saya tidak memahami pertanyaan Anda.")
     return prediction, response
 
-# Streamlit app
-st.title("Pendaftaran Mahasiswa BotEdu")
-
-st.sidebar.header("Tentang")
-st.sidebar.write(
-    "Chatbot ini membantu Anda dengan pertanyaan terkait pendaftaran mahasiswa di BotEdu."
-)
-
-# Menyimpan percakapan di session state
-if 'conversation' not in st.session_state:
-    st.session_state.conversation = []
-
-# Input box untuk user query
-user_input = st.text_input("Tanyakan sesuatu tentang pendaftaran:")
-
-if user_input:
-    # Mendapatkan intent dan respons
-    predicted_intent, predicted_response = predict_intent_and_response(user_input)
+def main():
+    st.set_page_config(page_title="BotEdu Chat", layout="wide")
+    local_css()
     
-    # Menambahkan percakapan ke session state
-    st.session_state.conversation.append(f"**Anda:** {user_input}")
-    st.session_state.conversation.append(f"**BotEdu:** {predicted_response}")
+    # Initialize session state
+    if 'conversation' not in st.session_state:
+        st.session_state.conversation = []
+    
+    # Load model and dataset
+    model = load_model()
+    train_df = load_dataset()
+    intent_response_mapping = dict(zip(train_df['Intent'], train_df['Respon']))
+    
+    # Main container
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
+    
+    # Header
+    st.title("Pendaftaran Mahasiswa BotEdu")
+    
+    # Display conversation history
+    for message in st.session_state.conversation:
+        display_message(message['text'], message['is_user'])
+    
+    # Chat input container
+    with st.container():
+        col1, col2 = st.columns([6, 1])
+        with col1:
+            user_input = st.text_input("", placeholder="Ketik pesan Anda di sini...", key="user_input")
+        with col2:
+            send_button = st.button("Kirim")
+    
+    if send_button and user_input:
+        # Add user message to conversation
+        st.session_state.conversation.append({
+            'text': user_input,
+            'is_user': True
+        })
+        
+        # Get bot response
+        _, bot_response = predict_intent_and_response(user_input, model, intent_response_mapping)
+        
+        # Add bot response to conversation
+        st.session_state.conversation.append({
+            'text': bot_response,
+            'is_user': False
+        })
+        
+        # Clear input
+        st.session_state.user_input = ""
+        
+        # Rerun to update chat
+        st.rerun()
 
-# Menampilkan percakapan sebelumnya
-for message in st.session_state.conversation:
-    st.write(message)
+if __name__ == "__main__":
+    main()
