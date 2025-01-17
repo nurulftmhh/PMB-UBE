@@ -2,8 +2,9 @@ import streamlit as st
 import joblib
 import pandas as pd
 from datetime import datetime
+import base64
 
-# Custom CSS untuk chat bubbles
+# Custom CSS untuk chat bubbles dengan tambahan styling untuk avatar
 def local_css():
     st.markdown("""
     <style>
@@ -19,16 +20,41 @@ def local_css():
         flex-direction: column;
     }
     
+    .message-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    .bot-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #2E4053;
+    }
+    
+    .message-bubble {
+        padding: 10px;
+        border-radius: 15px;
+        max-width: 80%;
+    }
+    
     .user-message {
         background-color: #E9ECEF;
-        margin-left: 20%;
+        margin-left: auto;
         margin-right: 2%;
     }
     
     .bot-message {
         background-color: #007AFF;
         color: white;
-        margin-right: 20%;
+        margin-right: auto;
         margin-left: 2%;
     }
     
@@ -36,6 +62,7 @@ def local_css():
         font-size: 0.8rem;
         color: #888;
         margin-top: 5px;
+        text-align: right;
     }
     
     .chat-input {
@@ -49,24 +76,52 @@ def local_css():
     .main-container {
         margin-bottom: 100px;
     }
+
+    .stButton button {
+        background-color: #007AFF;
+        color: white;
+        border-radius: 20px;
+        padding: 0.5rem 2rem;
+        border: none;
+    }
+
+    .stTextInput input {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        border: 1px solid #E9ECEF;
+    }
     </style>
     """, unsafe_allow_html=True)
+
+# Base64 encoded robot avatar (you can replace this with your own image)
+BOT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDdBRkYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIxMSIgd2lkdGg9IjE4IiBoZWlnaHQ9IjExIiByeD0iMiIgcnk9IjIiPjwvcmVjdD48cGF0aCBkPSJNNyAxMVY3YTUgNSAwIDAgMSAxMCAwdjQiPjwvcGF0aD48bGluZSB4MT0iOCIgeTE9IjE1IiB4Mj0iMTAiIHkyPSIxNSI+PC9saW5lPjxsaW5lIHgxPSIxNCIgeTE9IjE1IiB4Mj0iMTYiIHkyPSIxNSI+PC9saW5lPjwvc3ZnPg=="
 
 # Fungsi untuk menampilkan pesan dalam format bubble
 def display_message(message, is_user=True):
     current_time = datetime.now().strftime("%H:%M")
+    
     if is_user:
         st.markdown(f"""
-        <div class="chat-message user-message">
-            {message}
-            <div class="message-time">{current_time}</div>
+        <div class="chat-message">
+            <div class="message-bubble user-message">
+                {message}
+                <div class="message-time">{current_time}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
-        <div class="chat-message bot-message">
-            {message}
-            <div class="message-time">{current_time}</div>
+        <div class="chat-message">
+            <div class="message-content">
+                <img src="{BOT_AVATAR}" class="avatar" alt="EduBot">
+                <div style="flex-grow: 1;">
+                    <div class="bot-name">EduBot</div>
+                    <div class="message-bubble bot-message">
+                        {message}
+                        <div class="message-time">{current_time}</div>
+                    </div>
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -106,8 +161,18 @@ def main():
     # Main container
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
-    # Header
-    st.title("Pendaftaran Mahasiswa BotEdu")
+    # Header with bot info
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(f"""
+        <div style="display: flex; align-items: center; gap: 10px; margin: 20px 0;">
+            <img src="{BOT_AVATAR}" style="width: 50px; height: 50px; border-radius: 50%;">
+            <div>
+                <h2 style="margin: 0;">EduBot</h2>
+                <p style="margin: 0; color: #666;">Asisten Pendaftaran Mahasiswa BotEdu</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Display conversation history
     for message in st.session_state.conversation:
