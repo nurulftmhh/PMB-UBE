@@ -85,10 +85,26 @@ def local_css():
 
     .header-container {
         display: flex;
-        justify-content: flex-end;
+        flex-direction: column;
         align-items: center;
-        gap: 10px;
-        margin: 20px 0;
+        justify-content: center;
+        text-align: center;
+        margin: 20px auto 40px auto;  /* Added more bottom margin */
+        padding-bottom: 20px;  /* Added padding at bottom */
+        border-bottom: 1px solid #E9ECEF;  /* Added separator line */
+        max-width: 600px;  /* Limit width for larger screens */
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .chat-container {
+        margin-top: 30px;  /* Added space below header */
+        padding: 20px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -151,19 +167,24 @@ def main():
     
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
-    # Header with bot info - now right-aligned
+    # Centered header with more spacing
     st.markdown(f"""
     <div class="header-container">
-        <div style="text-align: center;">
-            <h2 style="margin: 0;">EduBot</h2>
-            <p style="margin: 0; color: #666;">Asisten Pendaftaran Mahasiswa BotEdu</p>
+        <div class="header-content">
+            <img src="{BOT_AVATAR}" style="width: 60px; height: 60px; border-radius: 50%;">
+            <div>
+                <h2 style="margin: 0; font-size: 24px;">EduBot</h2>
+                <p style="margin: 5px 0 0 0; color: #666;">Asisten Pendaftaran Mahasiswa BotEdu</p>
+            </div>
         </div>
-        <img src="{BOT_AVATAR}" style="width: 50px; height: 50px; border-radius: 50%;">
     </div>
+    <div class="chat-container">
     """, unsafe_allow_html=True)
     
     for message in st.session_state.conversation:
         display_message(message['text'], message['is_user'])
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     with st.container():
         col1, col2 = st.columns([6, 1])
