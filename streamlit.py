@@ -57,13 +57,6 @@ def local_css():
         margin-left: 2%;
     }
     
-    .message-time {
-        font-size: 0.8rem;
-        color: #888;
-        margin-top: 5px;
-        text-align: right;
-    }
-    
     .chat-input {
         position: fixed;
         bottom: 0;
@@ -77,11 +70,11 @@ def local_css():
     }
 
     .stButton button {
-        background-color: #007AFF;
-        color: white;
+        background-color: white;
+        color: #007AFF;
         border-radius: 20px;
         padding: 0.5rem 2rem;
-        border: none;
+        border: 1px solid #007AFF;
     }
 
     .stTextInput input {
@@ -89,22 +82,25 @@ def local_css():
         padding: 0.5rem 1rem;
         border: 1px solid #E9ECEF;
     }
+
+    .header-container {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        margin: 20px 0;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# Base64 encoded robot avatar (you can replace this with your own image)
 BOT_AVATAR = "https://miro.medium.com/v2/resize:fit:828/format:webp/1*I9KrlBSL9cZmpQU3T2nq-A.jpeg"
 
-# Fungsi untuk menampilkan pesan dalam format bubble
 def display_message(message, is_user=True):
-    current_time = datetime.now().strftime("%H:%M")
-    
     if is_user:
         st.markdown(f"""
         <div class="chat-message">
             <div class="message-bubble user-message">
                 {message}
-                <div class="message-time">{current_time}</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -117,14 +113,12 @@ def display_message(message, is_user=True):
                     <div class="bot-name">EduBot</div>
                     <div class="message-bubble bot-message">
                         {message}
-                        <div class="message-time">{current_time}</div>
                     </div>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-# Muat model dan dataset
 @st.cache_resource
 def load_model():
     model = joblib.load('intent_classifier.pkl')
@@ -148,61 +142,49 @@ def main():
     st.set_page_config(page_title="BotEdu Chat", layout="wide")
     local_css()
     
-    # Initialize session state
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
     
-    # Load model and dataset
     model = load_model()
     train_df = load_dataset()
     intent_response_mapping = dict(zip(train_df['Intent'], train_df['Respon']))
     
-    # Main container
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
-    # Header with bot info
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        st.markdown(f"""
-        <div style="display: flex; align-items: center; gap: 10px; margin: 20px 0;">
-            <img src="{BOT_AVATAR}" style="width: 50px; height: 50px; border-radius: 50%;">
-            <div>
-                <h2 style="margin: 0;">EduBot</h2>
-                <p style="margin: 0; color: #666;">Asisten Pendaftaran Mahasiswa BotEdu</p>
-            </div>
+    # Header with bot info - now right-aligned
+    st.markdown(f"""
+    <div class="header-container">
+        <div style="text-align: right;">
+            <h2 style="margin: 0;">EduBot</h2>
+            <p style="margin: 0; color: #666;">Asisten Pendaftaran Mahasiswa BotEdu</p>
         </div>
-        """, unsafe_allow_html=True)
+        <img src="{BOT_AVATAR}" style="width: 50px; height: 50px; border-radius: 50%;">
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Display conversation history
     for message in st.session_state.conversation:
         display_message(message['text'], message['is_user'])
     
-    # Chat input container
     with st.container():
         col1, col2 = st.columns([6, 1])
         with col1:
-            # Using a form to handle input clearing properly
             with st.form(key='chat_form', clear_on_submit=True):
                 user_input = st.text_input("", placeholder="Ketik pesan Anda di sini...")
                 submit_button = st.form_submit_button("Kirim")
     
         if submit_button and user_input:
-            # Add user message to conversation
             st.session_state.conversation.append({
                 'text': user_input,
                 'is_user': True
             })
             
-            # Get bot response
             _, bot_response = predict_intent_and_response(user_input, model, intent_response_mapping)
             
-            # Add bot response to conversation
             st.session_state.conversation.append({
                 'text': bot_response,
                 'is_user': False
             })
             
-            # Rerun to update chat
             st.rerun()
 
 if __name__ == "__main__":
