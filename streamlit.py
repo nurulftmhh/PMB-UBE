@@ -117,31 +117,29 @@ def main():
     with st.container():
         col1, col2 = st.columns([6, 1])
         with col1:
-            user_input = st.text_input("", placeholder="Ketik pesan Anda di sini...", key="user_input")
-        with col2:
-            send_button = st.button("Kirim")
+            # Using a form to handle input clearing properly
+            with st.form(key='chat_form', clear_on_submit=True):
+                user_input = st.text_input("", placeholder="Ketik pesan Anda di sini...")
+                submit_button = st.form_submit_button("Kirim")
     
-    if send_button and user_input:
-        # Add user message to conversation
-        st.session_state.conversation.append({
-            'text': user_input,
-            'is_user': True
-        })
-        
-        # Get bot response
-        _, bot_response = predict_intent_and_response(user_input, model, intent_response_mapping)
-        
-        # Add bot response to conversation
-        st.session_state.conversation.append({
-            'text': bot_response,
-            'is_user': False
-        })
-        
-        # Clear input
-        st.session_state.user_input = ""
-        
-        # Rerun to update chat
-        st.rerun()
+        if submit_button and user_input:
+            # Add user message to conversation
+            st.session_state.conversation.append({
+                'text': user_input,
+                'is_user': True
+            })
+            
+            # Get bot response
+            _, bot_response = predict_intent_and_response(user_input, model, intent_response_mapping)
+            
+            # Add bot response to conversation
+            st.session_state.conversation.append({
+                'text': bot_response,
+                'is_user': False
+            })
+            
+            # Rerun to update chat
+            st.rerun()
 
 if __name__ == "__main__":
     main()
