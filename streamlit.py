@@ -154,7 +154,7 @@ def main():
     # Header with bot info - now right-aligned
     st.markdown(f"""
     <div class="header-container">
-        <div style="text-align: right;">
+        <div style="text-align: center;">
             <h2 style="margin: 0;">EduBot</h2>
             <p style="margin: 0; color: #666;">Asisten Pendaftaran Mahasiswa BotEdu</p>
         </div>
