@@ -190,7 +190,7 @@ def main():
         col1, col2 = st.columns([6, 1])
         with col1:
             with st.form(key='chat_form', clear_on_submit=True):
-                user_input = st.text_input("", placeholder="Ketik pesan Anda di sini...")
+                user_input = st.text_input("", placeholder="Ketik pertanyaan Anda di sini...")
                 submit_button = st.form_submit_button("Kirim")
     
         if submit_button and user_input:
