@@ -4,7 +4,6 @@ import pandas as pd
 from datetime import datetime
 import base64
 
-# Custom CSS untuk chat bubbles dengan tambahan styling untuk avatar
 def local_css():
     st.markdown("""
     <style>
@@ -94,7 +93,7 @@ def local_css():
     """, unsafe_allow_html=True)
 
 # Base64 encoded robot avatar (you can replace this with your own image)
-BOT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDdBRkYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIxMSIgd2lkdGg9IjE4IiBoZWlnaHQ9IjExIiByeD0iMiIgcnk9IjIiPjwvcmVjdD48cGF0aCBkPSJNNyAxMVY3YTUgNSAwIDAgMSAxMCAwdjQiPjwvcGF0aD48bGluZSB4MT0iOCIgeTE9IjE1IiB4Mj0iMTAiIHkyPSIxNSI+PC9saW5lPjxsaW5lIHgxPSIxNCIgeTE9IjE1IiB4Mj0iMTYiIHkyPSIxNSI+PC9saW5lPjwvc3ZnPg=="
+BOT_AVATAR = "https://miro.medium.com/v2/resize:fit:828/format:webp/1*I9KrlBSL9cZmpQU3T2nq-A.jpeg"
 
 # Fungsi untuk menampilkan pesan dalam format bubble
 def display_message(message, is_user=True):
