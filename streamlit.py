@@ -1,15 +1,73 @@
 import streamlit as st
 import tensorflow as tf
-import joblib
+import numpy as np
 import pandas as pd
-from datetime import datetime
-import base64
+import pickle
+from tensorflow.keras.models import load_model
+import string
+
+# Cache the model loading
+@st.cache_resource
+def load_resources():
+    try:
+        # Load the LSTM model
+        model = load_model("model_lstm.h5")
+        
+        # Load the label encoder
+        with open("label_encoder.pkl", "rb") as f:
+            label_encoder = pickle.load(f)
+            
+        # Load the text vectorization layer
+        with open("text_vectorization.pkl", "rb") as f:
+            text_vectorizer = pickle.load(f)
+            
+        # Load the training data for response mapping
+        train_df = pd.read_csv('Data Train.csv')
+        intent_response_mapping = dict(zip(train_df['Intent'], train_df['Respon']))
+        
+        return model, label_encoder, text_vectorizer, intent_response_mapping
+    except Exception as e:
+        st.error(f"Error loading resources: {str(e)}")
+        return None, None, None, None
+
+# Text preprocessing function
+def preprocess_text(text):
+    text = text.lower()
+    text = text.translate(str.maketrans('', '', string.punctuation))
+    return text
+
+# Prediction function
+def predict_intent_and_response(user_input, model, label_encoder, text_vectorizer, intent_response_mapping):
+    try:
+        # Preprocess the input
+        processed_input = preprocess_text(user_input)
+        
+        # Vectorize the text
+        input_seq = text_vectorizer([processed_input])
+        
+        # Make prediction
+        prediction = model.predict(input_seq)
+        predicted_class_index = np.argmax(prediction)
+        
+        # Get the predicted intent
+        predicted_intent = label_encoder.inverse_transform([predicted_class_index])[0]
+        
+        # Get the corresponding response
+        response = intent_response_mapping.get(predicted_intent, 
+            "Maaf, saya tidak dapat memahami pertanyaan Anda. Mohon ajukan pertanyaan dengan cara yang berbeda.")
+        
+        return predicted_intent, response
+    except Exception as e:
+        st.error(f"Error during prediction: {str(e)}")
+        return None, "Terjadi kesalahan dalam memproses pertanyaan Anda. Silakan coba lagi."
 
 def local_css():
     st.markdown("""
     <style>
     .chat-container {
-        padding: 10px;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
     }
     
     .chat-message {
@@ -40,9 +98,10 @@ def local_css():
     }
     
     .message-bubble {
-        padding: 10px;
+        padding: 12px 16px;
         border-radius: 15px;
         max-width: 80%;
+        line-height: 1.4;
     }
     
     .user-message {
@@ -61,58 +120,51 @@ def local_css():
     .chat-input {
         position: fixed;
         bottom: 0;
-        width: 100%;
+        left: 0;
+        right: 0;
         padding: 20px;
+        background-color: white;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .header-container {
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid #E9ECEF;
+        margin-bottom: 30px;
         background-color: white;
     }
     
-    .main-container {
-        margin-bottom: 100px;
-    }
-
     .stButton button {
-        background-color: white;
-        color: #007AFF;
+        background-color: #007AFF;
+        color: white;
         border-radius: 20px;
         padding: 0.5rem 2rem;
-        border: 1px solid #007AFF;
+        border: none;
+        transition: all 0.3s ease;
     }
-
+    
+    .stButton button:hover {
+        background-color: #0056b3;
+    }
+    
     .stTextInput input {
         border-radius: 20px;
-        padding: 0.5rem 1rem;
+        padding: 0.8rem 1rem;
         border: 1px solid #E9ECEF;
+        font-size: 16px;
     }
-
-    .header-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        margin: 20px auto 40px auto;  /* Added more bottom margin */
-        padding-bottom: 20px;  /* Added padding at bottom */
-        border-bottom: 1px solid #E9ECEF;  /* Added separator line */
-        max-width: 600px;  /* Limit width for larger screens */
-    }
-
-    .header-content {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 10px;
-    }
-
-    .chat-container {
-        margin-top: 30px;  /* Added space below header */
-        padding: 20px;
+    
+    .main-content {
+        margin-bottom: 100px;
+        padding: 0 20px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-BOT_AVATAR = "https://miro.medium.com/v2/resize:fit:828/format:webp/1*I9KrlBSL9cZmpQU3T2nq-A.jpeg"
-
 def display_message(message, is_user=True):
+    bot_avatar = "https://miro.medium.com/v2/resize:fit:828/format:webp/1*I9KrlBSL9cZmpQU3T2nq-A.jpeg"
+    
     if is_user:
         st.markdown(f"""
         <div class="chat-message">
@@ -125,7 +177,7 @@ def display_message(message, is_user=True):
         st.markdown(f"""
         <div class="chat-message">
             <div class="message-content">
-                <img src="{BOT_AVATAR}" class="avatar" alt="EduBot">
+                <img src="{bot_avatar}" class="avatar" alt="EduBot">
                 <div style="flex-grow: 1;">
                     <div class="bot-name">EduBot</div>
                     <div class="message-bubble bot-message">
@@ -136,78 +188,79 @@ def display_message(message, is_user=True):
         </div>
         """, unsafe_allow_html=True)
 
-@st.cache_resource
-def load_model():
-    model = joblib.load("model.pkl")  
-    return model
-
-@st.cache_data
-def load_dataset():
-    train_df = pd.read_csv('Data Train.csv')
-    return train_df
-
-def preprocess_text(text):
-    return text.lower()
-
-def predict_intent_and_response(user_input, model, intent_response_mapping):
-    processed_input = preprocess_text(user_input)
-    prediction = model.predict([processed_input])[0]
-    response = intent_response_mapping.get(prediction, "Maaf, saya tidak memahami pertanyaan Anda.")
-    return prediction, response
-
 def main():
-    st.set_page_config(page_title="BotEdu Chat", layout="wide")
+    st.set_page_config(
+        page_title="EduBot - Asisten Pendaftaran Mahasiswa",
+        page_icon="🎓",
+        layout="wide"
+    )
+    
     local_css()
     
+    # Initialize session state
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
     
-    model = load_model()
-    train_df = load_dataset()
-    intent_response_mapping = dict(zip(train_df['Intent'], train_df['Respon']))
+    # Load resources
+    model, label_encoder, text_vectorizer, intent_response_mapping = load_resources()
     
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
+    if not all([model, label_encoder, text_vectorizer, intent_response_mapping]):
+        st.error("Gagal memuat sumber daya yang diperlukan. Silakan refresh halaman.")
+        return
     
-    # Centered header with more spacing
-    st.markdown(f"""
+    # Header
+    st.markdown("""
     <div class="header-container">
-        <div class="header-content">
-            <img src="{BOT_AVATAR}" style="width: 60px; height: 60px; border-radius: 50%;">
-            <div>
-                <h2 style="margin: 0; font-size: 24px;">EduBot</h2>
-                <p style="margin: 5px 0 0 0; color: #666;">Asisten Pendaftaran Mahasiswa BotEdu</p>
-            </div>
-        </div>
+        <img src="https://miro.medium.com/v2/resize:fit:828/format:webp/1*I9KrlBSL9cZmpQU3T2nq-A.jpeg" 
+             style="width: 80px; height: 80px; border-radius: 50%; margin-bottom: 10px;">
+        <h1 style="margin: 10px 0; font-size: 28px;">EduBot</h1>
+        <p style="color: #666; font-size: 16px;">Asisten Pendaftaran Mahasiswa Baru</p>
     </div>
-    <div class="chat-container">
     """, unsafe_allow_html=True)
     
+    # Main content
+    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+    
+    # Display conversation history
     for message in st.session_state.conversation:
         display_message(message['text'], message['is_user'])
     
-    st.markdown('</div>', unsafe_allow_html=True)
-    
+    # Chat input
     with st.container():
-        col1, col2 = st.columns([6, 1])
-        with col1:
-            with st.form(key='chat_form', clear_on_submit=True):
-                user_input = st.text_input("", placeholder="Ketik pertanyaan Anda di sini...")
+        with st.form(key='chat_form', clear_on_submit=True):
+            user_input = st.text_input(
+                "",
+                placeholder="Ketik pertanyaan Anda di sini...",
+                key="user_input"
+            )
+            
+            col1, col2, col3 = st.columns([4, 1, 4])
+            with col2:
                 submit_button = st.form_submit_button("Kirim")
     
-        if submit_button and user_input:
-            st.session_state.conversation.append({
-                'text': user_input,
-                'is_user': True
-            })
-            
-            _, bot_response = predict_intent_and_response(user_input, model, intent_response_mapping)
-            
-            st.session_state.conversation.append({
-                'text': bot_response,
-                'is_user': False
-            })
-            
-            st.rerun()
+    # Handle user input
+    if submit_button and user_input:
+        # Add user message to conversation
+        st.session_state.conversation.append({
+            'text': user_input,
+            'is_user': True
+        })
+        
+        # Get bot response
+        intent, response = predict_intent_and_response(
+            user_input, model, label_encoder, text_vectorizer, intent_response_mapping
+        )
+        
+        # Add bot response to conversation
+        st.session_state.conversation.append({
+            'text': response,
+            'is_user': False
+        })
+        
+        # Rerun to update the display
+        st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
