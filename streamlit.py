@@ -149,11 +149,26 @@ def load_dataset():
 def preprocess_text(text):
     return text.lower()
 
-def predict_intent_and_response(user_input, model, intent_response_mapping):
+def predict_intent(text, model, tokenizer, max_length=50):
+    # Preprocess the text
+    processed_text = preprocess_text(text)
+    
+    # Tokenize and pad the text
+    sequence = tokenizer.texts_to_sequences([processed_text])
+    padded_sequence = pad_sequences(sequence, maxlen=max_length, padding='post')
+    
+    # Get prediction
+    prediction = model.predict(padded_sequence, verbose=0)
+    predicted_class = np.argmax(prediction, axis=1)[0]
+    
+    return predicted_class
+
+def predict_intent_and_response(user_input, model, tokenizer, intent_response_mapping, label_encoder):
     processed_input = preprocess_text(user_input)
-    prediction = model.predict([processed_input])[0]
-    response = intent_response_mapping.get(prediction, "Maaf, saya tidak memahami pertanyaan Anda.")
-    return prediction, response
+    prediction = predict_intent(processed_input, model, tokenizer)
+    intent = label_encoder.inverse_transform([prediction])[0]
+    response = intent_response_mapping.get(intent, "Maaf, saya tidak memahami pertanyaan Anda.")
+    return intent, response
 
 def main():
     st.set_page_config(page_title="BotEdu Chat", layout="wide")
