@@ -28,7 +28,7 @@ class ChatBot:
         
         # Try to load additional slangwords from CSV if available
         try:
-            slang_path = Path('slangword-indonesian.csv')
+            slang_path = Path('Slangword-indonesian.csv')
             if slang_path.exists():
                 with open(slang_path, mode='r', encoding='utf-8', newline='') as file:
                     reader = csv.reader(file)
@@ -44,7 +44,7 @@ class ChatBot:
     def initialize_components(self):
         try:
             # Load the saved model
-            self.model = tf.keras.models.load_model('chatbot_model.h5')
+            self.model = tf.keras.models.load_model('model_lstm.h5')
             
             # Load the text vectorizer
             with open('text_vectorization.pkl', 'rb') as f:
