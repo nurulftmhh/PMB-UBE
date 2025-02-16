@@ -138,7 +138,7 @@ def display_message(message, is_user=True):
 
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("model_lstm.h5")  
+    model = joblib.load("model.pkl")  
     return model
 
 @st.cache_data
