@@ -137,12 +137,12 @@ def display_message(message, is_user=True):
 
 @st.cache_resource
 def load_model():
-    model = joblib.load('intent_classifier.pkl')
+    model = joblib.load('model_lstm.h5')
     return model
 
 @st.cache_data
 def load_dataset():
-    train_df = pd.read_csv('Intent Pendaftaran Mahasiswa BotEdu - Data Train.csv')
+    train_df = pd.read_csv('Data Train.csv')
     return train_df
 
 def preprocess_text(text):
