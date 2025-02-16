@@ -1,4 +1,5 @@
 import streamlit as st
+import tensorflow as tf
 import joblib
 import pandas as pd
 from datetime import datetime
@@ -137,7 +138,7 @@ def display_message(message, is_user=True):
 
 @st.cache_resource
 def load_model():
-    model = joblib.load('model_lstm.h5')
+    model = tf.keras.models.load_model("model_lstm.h5")  
     return model
 
 @st.cache_data
